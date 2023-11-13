@@ -3,6 +3,8 @@ import { CreateUserDTO } from "./user/dto/create-user.dto";
 import { PrismaService } from "./prisma/prisma.service";
 import { UpdatePutUserDTO } from "./user/dto/update-put-user.dto";
 import { UpdatePatchUserDTO } from "./user/dto/update-patch-user.dto";
+import * as bcrypt from 'bcrypt';
+
 
 
 @Injectable()
@@ -10,14 +12,14 @@ export class UserService{
 
     constructor(private readonly prisma: PrismaService){}
 
-    async create({email, name, password}: CreateUserDTO){
+    async create(data : CreateUserDTO){
 
-       return this.prisma.user.create({
-            data:{
-                email,
-                name,
-                password
-            },  
+        const salt = await bcrypt.genSalt();
+
+        data.password = await bcrypt.hash(data.password,salt);
+       
+        return this.prisma.user.create({
+            data,  
         });
     
     }
@@ -38,19 +40,24 @@ export class UserService{
     })
     }
 
-    async update(id:number,{email, name, password, birthAt}: UpdatePutUserDTO){
+    async update(id:number,{email, name, password, birthAt,role}: UpdatePutUserDTO){
 
         await this.exists(id);
 
+        
+        const salt = await bcrypt.genSalt();
+
+        password = await bcrypt.hash(password,salt);
+
         return this.prisma.user.update({
-            data: {email, name, password, birthAt: birthAt? new Date(birthAt): null},
+            data: {email, name, password, birthAt: birthAt? new Date(birthAt): null, role},
             where:{
                 id
             }
         })
     }
 
-    async updatePartial(id:number,{email, name, password, birthAt}: UpdatePatchUserDTO){
+    async updatePartial(id:number,{email, name, password, birthAt,role}: UpdatePatchUserDTO){
 
         await this.exists(id);
 
@@ -71,9 +78,13 @@ export class UserService{
         }
 
         if (password){
-            data.password= password;
+        const salt = await bcrypt.genSalt();
+        password = await bcrypt.hash(password,salt);
         }
 
+        if (role){
+            data.password= role;
+        }
 
 
         return this.prisma.user.update({
