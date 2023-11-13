@@ -30,7 +30,9 @@ export class UserService{
 
     async show(id:number){
 
+
         await this.exists(id);
+
 
 
         return this.prisma.user.findUnique({
@@ -107,12 +109,14 @@ export class UserService{
     }
 
     async exists(id: number){
+
         if (!(await this.prisma.user.count({
             where:{
                 id
             }
         }))){
             throw new NotFoundException('Usuario desse' + id + 'não existe!')
+
         }
     }
 }
